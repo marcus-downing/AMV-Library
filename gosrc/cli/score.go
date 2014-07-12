@@ -1,0 +1,6 @@
+package cli
+
+
+func ScoreCLI() {
+
+}

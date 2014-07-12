@@ -1,0 +1,56 @@
+name = "AMV Library 2"
+libraryDir = "C:\\Users\\Marcus Downing\\Documents\\AMVs\\"
+playlistDir = "C:\\Users\\Marcus Downing\\Documents\\Anime\\Playlists\\"
+backupDir = "Z:\\"
+
+debug = true
+
+[categories]
+  
+  [categories.serious]
+  name = "Serious"
+  folders = [ "Serious" ]
+  
+  [categories.start]
+  name = "Starters"
+  folders = [ "Semi-serious", "Mood", "Dance", "Action" ]
+  
+  [categories.long]
+  name = "Long"
+  folders = [ "Long" ]
+
+  [categories.april]
+  name = "April Fool"
+  folders = [ "April Fool" ]
+  
+  [categories.christmas]
+  name = "Christmas"
+  folders = [ "Christmas" ]
+  
+  [categories.halloween]
+  name = "Halloween"
+  folders = [ "Halloween" ]
+  
+  [categories.meta]
+  name = "Meta"
+  folders = [ "Meta" ]
+  
+  [categories.buffer]
+  name = "Buffers"
+  folders = [ "Buffer" ]
+
+  [categories.exclude]
+  name = "Exclude"
+  folders = [ "Long/Anthologies/Processing", "Dyslexic Studeos" ]
+
+[levels]
+one = [ "Serious" ]
+two = [ "Semi-serious", "Mood", "Dance", "Action" ]
+three = [ "Trailers", "Meta" ]
+four = [ "Musicals", "Amusing", "Parody", "Spoken", "Anthology", "Gems" ]
+five = [ "Hyper", "Dubious", "Baffling" ]
+
+[exe]
+zoomplayer = "C:\\Program Files (x86)\\Zoom Player\\zplayer.exe"
+mpc = ""
+vlc = "C:\\Program Files (x86)\\VLC\\vlc.exe"

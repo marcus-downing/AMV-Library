@@ -3,36 +3,24 @@ package model
 import (
 	"fmt"
 	"path/filepath"
-	"strconv"
+	// "strconv"
 	// "strings"
 	"math"
 	"time"
 )
 
-//  data types
-type LibraryData struct {
-	AMVs      []*AMV      `xml:"amvs>amv"`
-	Playlists []*Playlist `xml:"playlists>playlist"`
-}
-
+//  AMVs
 type AMV struct {
-	Filename string     `xml:"filename"`
-	Duration string     `xml:"duration"`
-	Level    int        `xml:"level"`
-	Scores   []AMVScore `xml:"score"`
+	Filename string
+	Duration time.Duration
+	Scores   []AMVScore
 }
 
 type AMVScore struct {
-	Judge string `xml:"judge"`
-	Score int    `xml:"score"`
+	Judge string
+	Score int
 }
 
-type Playlist struct {
-	Date     string   `xml:"date"`
-	Viewings []string `xml:"viewing"`
-}
-
-//  accessors
 func (amv *AMV) Name() string {
 	filename := filepath.Base(amv.Filename)
 	ext := filepath.Ext(filename)
@@ -43,20 +31,42 @@ func (amv *AMV) Folder() string {
 	return filepath.Dir(amv.Filename)
 }
 
-func (amv *AMV) GetDuration() time.Duration {
-	seconds, err := strconv.Atoi(amv.Duration[2 : len(amv.Duration)-1])
-	if err != nil {
-		return 0
-	}
-	return time.Duration(seconds) * time.Second
+func (amv *AMV) HasDuration() bool {
+	return amv.Duration != 0
 }
 
 func (amv *AMV) GetDurationStr() string {
-	dur := amv.GetDuration()
-	mins := math.Floor(dur.Minutes())
-	seconds := math.Floor(dur.Seconds()) - mins*60
+	mins := math.Floor(amv.Duration.Minutes())
+	seconds := math.Floor(amv.Duration.Seconds()) - mins*60
 	return fmt.Sprintf("%d:%02d", int(mins), int(seconds))
 }
 
+func (amv *AMV) ScoreBy(judge string) *AMVScore {
+	for i, score := range amv.Scores {
+		if score.Judge == judge {
+			return &amv.Scores[i]
+		}
+	}
+	return nil
+}
+
+//  Playlists
+type Playlist struct {
+	Date     string
+	Viewings []string
+}
+
+func (playlist *Playlist) AMVs() []*AMV {
+	amvs := make([]*AMV, 0, len(playlist.Viewings))
+	for _, name := range playlist.Viewings {
+		if amv, ok := amvsByName[name]; ok {
+			amvs = append(amvs, amv)
+		}
+	}
+	return amvs
+}
+
 //  the actual library
-var Library LibraryData
+
+var AMVs []*AMV
+var Playlists []*Playlist

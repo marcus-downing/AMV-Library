@@ -37,7 +37,7 @@ func durationScore(amv *model.AMV, params *MatchParameters) float64 {
 		return 0
 	}
 
-	diffSecs := math.Abs(amv.GetDuration().Seconds() - params.Duration.Seconds())
+	diffSecs := math.Abs(amv.Duration.Seconds() - params.Duration.Seconds())
 	return -diffSecs / 10
 }
 

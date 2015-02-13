@@ -73,5 +73,5 @@ func init() {
 }
 
 func DebugConfig() {
-	fmt.Printf("\033[35mConfig: %#v\n", Config)
+	fmt.Printf("Config: %#v\n", Config)
 }

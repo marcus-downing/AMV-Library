@@ -15,12 +15,12 @@ func init() {
 }
 
 func Any() *model.AMV {
-	return model.Library.AMVs[rand.Intn(len(model.Library.AMVs))]
+	return model.AMVs[rand.Intn(len(model.AMVs))]
 }
 
 func Match(terms []string) []*model.AMV {
 	params := parseTerms(terms)
-	candidates := candidateAMVs(params)
+	candidates := CandidateAMVs(params)
 	if params.All {
 		return candidates
 	}
@@ -38,6 +38,8 @@ type MatchParameters struct {
 	All         bool
 	AnyCategory bool
 	NeverShown  bool
+	Unscored    bool
+	Judge       string
 	Threshold   float64
 	Duration    time.Duration
 }
@@ -146,7 +148,7 @@ terms:
 	}
 
 	if conf.Debug {
-		fmt.Printf("   \033[35mSearch params: %#v\n", params)
+		fmt.Printf("   Search params: %#v\n", params)
 	}
 	return &params
 }
@@ -157,8 +159,8 @@ func conflateQuotedTerms(terms []string) string {
 	return strings.Join(terms, " ")
 }
 
-func candidateAMVs(params *MatchParameters) []*model.AMV {
-	all := model.Library.AMVs
+func CandidateAMVs(params *MatchParameters) []*model.AMV {
+	all := model.AMVs
 	candidates := make([]*model.AMV, 0, len(all))
 	conf := &config.Config
 	if len(params.Categories) == 0 {
@@ -176,16 +178,36 @@ func candidateAMVs(params *MatchParameters) []*model.AMV {
 			}
 		}
 	}
+	if conf.Debug {
+		fmt.Println("Found", len(candidates), "candidates")
+	}
 
 	if params.NeverShown {
 		neverShown := make([]*model.AMV, 0, len(candidates))
 		for _, amv := range candidates {
-			viewings, _ := model.AMVViewings(amv)
+			viewings, _ := model.AMVviewings(amv)
 			if len(viewings) == 0 {
 				neverShown = append(neverShown, amv)
 			}
 		}
-		return neverShown
+		candidates = neverShown
+		if conf.Debug {
+			fmt.Println("Never shown:", len(candidates), "candidates")
+		}
+	}
+
+	if params.Unscored {
+		unscored := make([]*model.AMV, 0, len(candidates))
+		for _, amv := range candidates {
+			score := amv.ScoreBy("sadie")
+			if score == nil {
+				unscored = append(unscored, amv)
+			}
+		}
+		candidates = unscored
+		if conf.Debug {
+			fmt.Println("Unscored by", params.Judge, ":", len(candidates), "candidates")
+		}
 	}
 	return candidates
 }

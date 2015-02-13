@@ -1,9 +1,9 @@
 name = "AMV Library 2"
-libraryDir = "C:\\Users\\Marcus Downing\\Documents\\AMVs\\"
-playlistDir = "C:\\Users\\Marcus Downing\\Documents\\Anime\\Playlists\\"
+libraryDir = "C:\\Users\\Marcus\\Documents\\AMVs\\"
+playlistDir = "C:\\Users\\Marcus\\Documents\\Anime\\Playlists\\"
 backupDir = "Z:\\"
 
-debug = true
+debug = false
 
 [categories]
   
@@ -41,7 +41,7 @@ debug = true
 
   [categories.exclude]
   name = "Exclude"
-  folders = [ "Long/Anthologies/Processing", "Dyslexic Studeos" ]
+  folders = [ "Long/Anthologies/Processing", "Dyslexic Studeos", "BAS" ]
 
 [levels]
 one = [ "Serious" ]

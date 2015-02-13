@@ -1,7 +1,6 @@
 package bas.cli
 
 import org.joda.time.LocalDate
-import bas.tools.log._
 import bas.library._
 import bas.library.commands._
 import java.io._
@@ -14,6 +13,8 @@ import bas.tools.xml.JodaConversions._
 import bas.store.xml.{Controller, ShowingSettings}
 import collection.mutable.ListBuffer
 
+import scala.Console
+
 object CLI {
 	var latest: List[AMV] = Nil
     private var in: BufferedReader = null
@@ -21,11 +22,12 @@ object CLI {
     object Nothing
 
     def main (args: Array[String]): Unit = {
-        Log.start
         in = new BufferedReader(new InputStreamReader(System.in))
         while (true) {
-            print("bas> ");
+            print(Console.GREEN+Console.BOLD+"bas"+"> "+Console.WHITE)
+            Console.flush()
             val line = in.readLine()
+            print(Console.RESET)
             doCommand(line)
         }
     }
@@ -41,14 +43,16 @@ object CLI {
     private val countAMVs = "count (.*)" r
     private val scoreAMVs = "score @([a-zA-Z0-9]+)(.*)" r
     private val rescoreAMVs = "rescore @([a-zA-Z0-9]+)(.*)" r
+    private val playOne = "play (.*)" r
+    private val plusLine = "\\+(.*)" r
 
     private val dateFormat = DateTimeFormat.forPattern("yyyy MM dd")
 
     def doCommand (line: String) = {
-        Log ! Cmd("\n> " + line)
-        line.trim match {
+        val input = line.trim
+        input match {
             case "?" =>
-                Source.fromFile("help.txt").getLines foreach { line: String => println(line.trim) }
+                Source.fromFile("help.txt").getLines foreach { line: String => println(input) }
                 
             case "debug on" =>
                 Settings.debug = true
@@ -89,7 +93,15 @@ object CLI {
 //            case backupPlaylistLine(playlist) => AMVLibrary.backupPlaylist(playlist, Settings.backupPath)
 
             case "play" => Player.play(latest)
+            case playOne(line) =>
+                val rules = parseRules(line)
+                val amvs = rules.find
+                Player.play(amvs)
             case "+" => Player.queue(latest)
+            case plusLine(line) =>
+                val rules = parseRules(line)
+                val amvs = rules.find
+                Player.queue(amvs)
             case scoreAMVs(judge, cmd) =>
               	val rules = parseRules(cmd+" all")
               	scoreAMVs(rules, judge, false)
@@ -97,26 +109,37 @@ object CLI {
               	val rules = parseRules(cmd+" all")
               	scoreAMVs(rules, judge, true)
             
-            case "exit" => Log ! Close; System.exit(0); None
+            case _ => input match {
+                case "exit" => 
+                    exit()
+                    None
 
-            case "show settings" =>
-                val settings: ShowingSettings = Controller.showingSettings
-                printSettings(settings)
+                case "show settings" =>
+                    val settings: ShowingSettings = Controller.showingSettings
+                    printSettings(settings)
 
-            case "*" =>
-              	latest = Controller.amvs
-              	writeAMVs(latest)
-              	
-            case _ =>
-                val rules = parseRules(line)
-                val amvs = rules.find
-                latest = amvs
-                writeAMVs(amvs)
+                case "*" =>
+                  	latest = Controller.amvs
+                  	writeAMVs(latest)
+                  	
+                case _ =>
+                    val rules = parseRules(input)
+                    val amvs = rules.find
+                    latest = amvs
+                    writeAMVs(amvs)
+            }
         }
     }
 
     def printSettings (settings: ShowingSettings) = {
         
+    }
+
+    def exit() {
+        println(Console.RESET+Console.BOLD+"bye")
+        System.setSecurityManager(null)
+        System.exit(0)
+        println(Console.RED+"You still here?")
     }
 
     private val durationFormat =
@@ -131,20 +154,20 @@ object CLI {
     def writeCount (count: Int) = println("  " + count + " AMVs")
 
     def writeAMV (amv: AMV) {
-        println("  Name:            " + amv.name + "        (" + amv.location + ")");
+        println(Console.RESET+"  Name:         "+Console.BOLD+Console.GREEN+amv.name+Console.RESET+"        ("+amv.location+")");
         if (amv.duration != new Period())
-            println("  Duration:       " + amv.duration.normalizedStandard.toString(durationFormat))
+            println("  Duration:     " + amv.duration.normalizedStandard.toString(durationFormat))
         
         val dateThreshold = new LocalDate().withYear(2007)
         val (viewings, oldViewings) = amv.viewings.partition { _.date.isAfter(dateThreshold) }
         viewings.reverse match {
           	case latest :: tail =>
-	            println("  Last shown:   " + latest.date)
+	            println("  Last shown:   "+latest.date)
 	            val previous = tail.map(_.date)
 	            if (!previous.isEmpty) {
-                    println("  Also shown:  " + previous.mkString(", ") + (if (oldViewings.isEmpty) "" else " and long ago"))
+                    println("  Also shown:   "+previous.mkString(", ")+(if (oldViewings.isEmpty) "" else " and long ago"))
 	            } else if (!oldViewings.isEmpty)
-	            	println("  Also shown:  long ago")
+	            	println("  Also shown:   long ago")
           	case Nil => println("  Never shown")
         }
         if (Settings.debug) {
@@ -235,38 +258,55 @@ object CLI {
     }
     
     def scoreAMVs (rules: RuleSet, judge: String, rescore: Boolean): Unit = {
-		val amvs = RuleSet(rules.rules, 1000).find
+        val allAMVs = util.Random.shuffle(RuleSet(rules.rules, 1000000).find)
+        def report() {
+            val scoredAMVs = allAMVs.filter(_.hasScoreBy(judge))
+            println()
+            println(Console.CYAN+Console.BOLD+"Scored "+(scoredAMVs.length)+" of "+(allAMVs.length)+" AMVs")
+            if (allAMVs.length == scoredAMVs.length)
+                println("Nothing left to score")
+            println(Console.RESET)
+        }
+
 		val toScore = if (rescore) {
-			val scored = amvs.filter(_.hasScoreBy(judge))
+			val scored = allAMVs.filter(_.hasScoreBy(judge))
 			if (scored.isEmpty) {
-				println("You haven't yet scored any of these AMVs")
+				println(Console.RED+"You haven't yet scored any of these AMVs"+Console.RESET)
 				return
 			}
 			println("Revisiting the AMVs you've already scored")
 			scored
 		} else {
-			val unscored = amvs.filter(!_.hasScoreBy(judge))
+			val unscored = allAMVs.filter(!_.hasScoreBy(judge))
 			if (unscored.isEmpty) {
-				if (amvs.isEmpty) println("No AMVs found to score")
-				else println("You have already scored all these AMVs")
+				if (allAMVs.isEmpty) println(Console.RED+"No AMVs found to score"+Console.RESET)
+				else println(Console.RED+"You have already scored all these AMVs"+Console.RESET)
+                report()
 				return
 			}
 			unscored
 		}
 		
-		println("Score AMVs with a number from 0 (it sucks) to 9 (it rocks). A score of 5 is average.")
-		println("Hit enter to skip, 'quit' or 'q' to finish scoring, or 'exit' to end the program.")
+		println(Console.RESET+Console.CYAN+"Score AMVs with a number from "+Console.BOLD+"0"+Console.RESET+Console.CYAN+" (it sucks) to "+Console.BOLD+"9"+Console.RESET+Console.CYAN+" (it rocks). A score of "+Console.BOLD+"5"+Console.RESET+Console.CYAN+" is average.")
+		println("Hit enter to skip, "+Console.BOLD+"quit"+Console.RESET+Console.CYAN+" or "+Console.BOLD+"q"+Console.RESET+Console.CYAN+" to finish scoring, or "+Console.BOLD+"exit"+Console.RESET+Console.CYAN+" to end the program.")
+        println()
 
 		for (amv <- toScore) {
 	  		writeAMV(amv)
   			Player.playOne(amv)
-			print("score 0-9 or quit> ");
+			print(Console.GREEN+Console.BOLD+"score 0-9 or quit> "+Console.WHITE);
 	  		val line = in.readLine().trim
+            println(Console.RESET)
 	  		line match {
 	  		  	case "" => 
-	  		  	case "exit" => Player.quit; Log ! Close; System.exit(0)	
-	  		  	case "quit" => return
-	  		  	case "q" => return
+	  		  	case "exit" => 
+                    report()
+                    Player.quit
+                    exit()
+                    None
+	  		  	case "quit" | "q" => 
+                    report()
+                    return
 	  		  	case _ =>
 	  		  	  	try {
 		  		  		val score = line.split(" ").head.toInt
@@ -277,6 +317,8 @@ object CLI {
 	  		  	  	}
 	  		}
 		}
+
+        report()
     }
     
 }

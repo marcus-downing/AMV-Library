@@ -10,7 +10,7 @@ class ShowingSettings (val data: Node) {
 
     var _lastRecap: Option[LocalDate] = {
         (for (node <- data \ "lastrecap")
-            yield node toDate).firstOption
+            yield node toDate).headOption
     }
     
     def lastRecap: Option[LocalDate] = _lastRecap

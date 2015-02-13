@@ -11,7 +11,7 @@ import collection.mutable.ListBuffer
 import java.util.Arrays
 import bas.store.xml.Controller
 import bas.store.{AMV, Viewing, Playlist}
-import bas.tools.log.Log
+// import bas.tools.log.Log
 
 object PlaylistFile {
     val dateFormat = DateTimeFormat.forPattern("yyyy MM dd")
@@ -109,17 +109,17 @@ abstract class PlaylistFile (val file: File) {
 
     def scan = {
         val playlist = new Playlist(date)
-        Log ! "Scanning " + name
+        println("Scanning " + name)
         playlist.viewings = for {
             entry <- read
             amv <- entry.amv
         } yield {
             for (duration <- entry.duration if duration != new Period())
                 amv.duration = duration
-            Log ! amv.path
+            println(amv.path)
             new Viewing(amv, date)
         }
-        Log ! "Scanned " + name + " - " + playlist.viewings.length + " AMVs"
+        println("Scanned " + name + " - " + playlist.viewings.length + " AMVs")
         Controller.addPlaylist(playlist)
         Controller.saveData
     }

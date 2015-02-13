@@ -62,7 +62,7 @@ object Controller {
         }
     }
 
-    def getAMV (path: String): Option[AMV] = amvs filter { amv => amv.path == path } firstOption
+    def getAMV (path: String): Option[AMV] = amvs filter { amv => amv.path == path } headOption
 
     def randomAMV: AMV = {
         val num = Math.floor(Math.random * amvs.length).toInt
@@ -70,10 +70,10 @@ object Controller {
     }
 
     def getPlaylist (date: LocalDate): Option[Playlist] =
-        playlists filter (_.date == date) firstOption
+        playlists filter (_.date == date) headOption
 
     def latestPlaylist: Playlist =
-      playlists.sort((a: Playlist, b: Playlist) => a.date < b.date).last
+      playlists.sortWith ((a: Playlist, b: Playlist) => a.date < b.date).last
 
     def getPlaylists (from: Option[LocalDate], to: Option[LocalDate]): Seq[Playlist] = {
         (from, to) match {
@@ -89,11 +89,11 @@ object Controller {
 
     def viewings (amv: AMV): Seq[Viewing] = {
         val viewings = playlists flatMap { _.viewings } filter { _.amv == amv }
-        viewings.sort ((a: Viewing, b: Viewing) => a.date.compareTo(b.date) < 1)
+        viewings.sortWith ((a: Viewing, b: Viewing) => a.date.compareTo(b.date) < 1)
     }
 
     def addPlaylist (playlist: Playlist) {
-        playlists = playlists.remove { _.date == playlist.date }
+        playlists = playlists.filter { _.date != playlist.date }
         playlists = playlist :: playlists
     }
 

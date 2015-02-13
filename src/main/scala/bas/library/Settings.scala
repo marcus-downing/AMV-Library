@@ -5,10 +5,10 @@ import java.io.{FileInputStream, File}
 
 object Settings {
     val delim = """\"""
-    val basePath = """C:\Users\Marcus Downing\Documents\AMVs\"""
+    val basePath = """C:\Users\Marcus\Documents\AMVs\"""
     val altPath = List("""G:\AMVs\""", """Z:\AMVs\""", """C:\Documents\AMVs\""")
-    val playlistFolder = """C:\Users\Marcus Downing\Documents\Anime\Playlists\"""
-    val backupPath = """C:\Users\Marcus Downing\Documents\Anime Society\Backup\"""
+    val playlistFolder = """C:\Users\Marcus\Documents\Anime\Playlists\"""
+    val backupPath = """C:\Users\Marcus\Documents\Anime Society\Backup\"""
 
     val levelPaths = Map(
         1 -> List("Serious"),

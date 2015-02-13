@@ -6,9 +6,8 @@ import java.io._
 import org.joda.time._
 import org.joda.time.format._
 import playlists._
-import scala.actors.Actor
+// import scala.actors.Actor
 import bas.store.xml.Controller
-import bas.tools.log.Log
 //import unicode.UnicodeReader
 import collection.mutable.ListBuffer
 import bas.tools.xml.JodaConversions._
@@ -72,14 +71,15 @@ object AMVLibrary {
         if (source.exists) {
             if (destination.exists) {
                 if (destination.length == source.length)
-                    Log ! filePath + " (exists)"
+                    println(filePath + " (exists)")
                 else {
                     copyFile(source, destination)
-                    Log ! filePath + " (incomplete)"
+                    println(filePath + " (incomplete)")
                 }
             } else {
                 copyFile(source, destination)
-                Log ! filePath
+                println(filePath)
+
             }
 
             //  also copy associated files
@@ -113,21 +113,21 @@ object AMVLibrary {
             val amv = new AMV(path, new Period(), level, Nil)
             Controller.addAMV(amv)
             added += amv
-            Log ! "Added AMV " + amv.path
+            println("Added AMV " + amv.path)
         }
         Controller.amvs.foreach { amv: AMV =>
             val file = new File(Settings.basePath + amv.path.replace("/", Settings.delim))
             if (!file.exists) {
                 Controller.removeAMV(amv)
                 removed += amv
-                Log ! "Removed AMV " + amv.path
+                println("Removed AMV " + amv.path)
             }
         }
 
         for (r <- removed; a <- added) {
             if (r.similarity(a) >= 1.0) {
                 Controller.transferAMV(r, a)
-                Log ! "Transferred AMV " + r.path + " to " + a.path
+                println("Transferred AMV " + r.path + " to " + a.path)
             }
         }
         Controller.saveData

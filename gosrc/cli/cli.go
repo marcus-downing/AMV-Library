@@ -1,6 +1,7 @@
 package cli
 
 import (
+	// "../backup"
 	"../config"
 	"../match"
 	"../model"
@@ -104,10 +105,10 @@ func CLI() {
 		} else if command == "backup" {
 			//  backup the playlist and its attached files to another computer
 			if len(words) >= 4 {
-				playlist := strings.Join(words[1:3], " ")
-				backup.Playlist(playlist)
+				playlist := strings.Join(words[1:4], " ")
+				playlists.BackupPlaylist(playlist)
 			} else {
-				backup.All()
+				playlists.BackupAll()
 			}
 		} else {
 			//  fallback case: search for matches
@@ -145,7 +146,7 @@ func padString(str string, len int) string {
 }
 
 func ShowAMV(amv *model.AMV) {
-	if config.Config.Debug {
+	if config.Debug {
 		fmt.Printf("\n  "+purple+"%#v\n", amv)
 	}
 	fmt.Printf("\n  Name:        "+green+"%s"+white+"        (%s)\n", amv.Name(), amv.Folder())

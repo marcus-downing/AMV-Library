@@ -15,16 +15,16 @@ import (
 	"time"
 )
 
-type item struct {
-	name     string
-	duration string
+type ScannedItem struct {
+	Name     string
+	Duration string
 }
 
 func Scan() {
 	conf := config.Config
 	dir := conf.PlaylistDirectory
 
-	if config.Config.Debug {
+	if config.Debug {
 		fmt.Println("Reading dir", dir)
 	}
 	files, err := ioutil.ReadDir(dir)
@@ -40,12 +40,12 @@ func Scan() {
 		ext := filepath.Ext(filename)
 		date := filename[:len(filename)-len(ext)]
 		if ext == ".zpl" {
-			items := ScanPlaylistZpl(filename, path)
-			insertScannedItems(date, items)
+			items := ScanPlaylistZpl(path)
+			insertScannedScannedItems(date, items)
 			n++
 		} else if ext == ".m3u" || ext == ".m3u8" {
-			items := ScanPlaylistM3U(filename, path)
-			insertScannedItems(date, items)
+			items := ScanPlaylistM3U(path)
+			insertScannedScannedItems(date, items)
 			n++
 		}
 	}
@@ -56,15 +56,15 @@ func Scan() {
 	fmt.Println("Scanned", n, "playlists")
 }
 
-func insertScannedItems(date string, items []item) {
+func insertScannedScannedItems(date string, items []ScannedItem) {
 	conf := config.Config
 
 	for _, item := range items {
 		if conf.Debug {
 			fmt.Println("Insert item", date, item)
 		}
-		if strings.HasPrefix(item.name, conf.LibraryDirectory) {
-			path := item.name[len(conf.LibraryDirectory):]
+		if strings.HasPrefix(item.Name, conf.LibraryDirectory) {
+			path := item.Name[len(conf.LibraryDirectory):]
 
 			amv := model.AMVbyName(path)
 			if amv == nil {
@@ -75,7 +75,7 @@ func insertScannedItems(date string, items []item) {
 				model.AMVs = append(model.AMVs, amv)
 			}
 
-			if seconds, err := strconv.Atoi(item.duration); err == nil {
+			if seconds, err := strconv.Atoi(item.Duration); err == nil {
 				duration := time.Duration(seconds) * time.Second
 				if duration != 0 {
 					amv.Duration = duration
@@ -86,26 +86,26 @@ func insertScannedItems(date string, items []item) {
 	}
 }
 
-func ScanPlaylistZpl(filename, path string) []item {
-	if config.Config.Debug {
-		fmt.Println("Reading ZoomPlayer playlist", filename)
+func ScanPlaylistZpl(path string) []ScannedItem {
+	if config.Debug {
+		fmt.Println("\nReading ZoomPlayer playlist", path)
 	}
 
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		fmt.Println("Error reading", filename+":", err)
+		fmt.Println("Error reading", path+":", err)
 		return nil
 	}
 
 	decoded, err := utf16toString(data)
 	if err != nil {
-		fmt.Println("Error decoding", filename+":", err)
+		fmt.Println("Error decoding", path+":", err)
 		return nil
 	}
 
 	lines := strings.Split(decoded, "\n")
 	lines = append(lines, "br!")
-	found := make([]item, 0, len(lines)/2)
+	found := make([]ScannedItem, 0, len(lines)/2)
 
 	var nm, dr string
 	for _, line := range lines {
@@ -116,7 +116,7 @@ func ScanPlaylistZpl(filename, path string) []item {
 			dr = line[3:]
 		} else if line == "br!" {
 			if nm != "" {
-				found = append(found, item{nm, dr})
+				found = append(found, ScannedItem{nm, dr})
 			}
 			nm = ""
 			dr = ""
@@ -126,14 +126,14 @@ func ScanPlaylistZpl(filename, path string) []item {
 	return found
 }
 
-func ScanPlaylistM3U(filename, path string) []item {
-	if config.Config.Debug {
-		fmt.Println("Reading M3U playlist", filename)
+func ScanPlaylistM3U(path string) []ScannedItem {
+	if config.Debug {
+		fmt.Println("\nReading M3U playlist", path)
 	}
 
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		fmt.Println("Error reading", filename+":", err)
+		fmt.Println("Error reading", path+":", err)
 		return nil
 	}
 
@@ -146,7 +146,7 @@ func ScanPlaylistM3U(filename, path string) []item {
 	if lines[0] != "#EXTM3U" {
 		fmt.Println("Warning: missing #EXTM3U header")
 	}
-	found := make([]item, 0, len(lines)/2)
+	found := make([]ScannedItem, 0, len(lines)/2)
 
 	var dur string = ""
 	for _, line := range lines {
@@ -157,7 +157,7 @@ func ScanPlaylistM3U(filename, path string) []item {
 				dur = parts[0]
 			}
 		} else if line != "" && !strings.HasPrefix(line, "#") {
-			found = append(found, item{line, dur})
+			found = append(found, ScannedItem{line, dur})
 			dur = ""
 		}
 	}

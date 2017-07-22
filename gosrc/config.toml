@@ -1,9 +1,19 @@
 name = "AMV Library 2"
 libraryDir = "C:\\Users\\Marcus\\Documents\\AMVs\\"
+animeDir = "C:\\Users\\Marcus\\Documents\\Anime\\"
 playlistDir = "C:\\Users\\Marcus\\Documents\\Anime\\Playlists\\"
-backupDir = "Z:\\"
+# backupDir = "Z:\\"
+backupDir = "C:\\Users\\Marcus\\Documents\\Anime Backup\\"
 
-debug = false
+debug = true
+completePlaylistThreshold = 12
+
+backupTo = [
+  [ "C:\\Users\\Marcus\\Documents\\Anime Backup", "m3u" ],
+  [ "C:\\Users\\Marcus\\Documents\\Anime Backup\\Dropbox", "m3u", "true" ],
+  # [ "Z:", "m3u" ],
+  # [ "Z:\\Dropbox", "m3u", "true" ],
+]
 
 [categories]
   
